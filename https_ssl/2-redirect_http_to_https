@@ -1,0 +1,30 @@
+global
+    log /dev/log local0
+    log /dev/log local1 notice
+    chroot /var/lib/haproxy
+    stats socket /run/haproxy/admin.sock mode 660 level admin
+    stats timeout 30s
+    user haproxy
+    group haproxy
+    daemon
+
+    # Enable SSL
+    ssl-default-bind-ciphers HIGH:!aNULL:!MD5
+    ssl-default-bind-options no-sslv3
+
+defaults
+    log global
+    option httplog
+    option dontlognull
+    timeout connect 5000ms
+    timeout client 50000ms
+    timeout server 50000ms
+
+frontend https_front
+    bind *:443 ssl crt /etc/haproxy/eddydev.pem
+    default_backend web_server
+
+backend web_server
+    balance roundrobin  # Distribute requests evenly
+    server web-01 3.93.220.110:80 check
+    server web-02 54.89.213.49:80 check
