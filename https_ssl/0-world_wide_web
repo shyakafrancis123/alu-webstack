@@ -1,14 +1,26 @@
 #!/usr/bin/env bash
-# script to config domain zone to point to load balancer
-# add more subdomains and display info about them
+# Script to display DNS info for subdomains
 
 domain=$1
-if [ "$#" -eq 2 ]; then
-   sub=$2
-else
-	sub=("www" "lb-01" "web-01" "web-02")
+subdomains=("www" "lb-01" "web-01" "web-02")
+
+# Check if domain was provided
+if [ -z "$domain" ]; then
+    echo "Usage: $0 domain_name [subdomain]"
+    exit 1
 fi
-for subdomain in "${sub[@]}"; do
-    echo -n "The subdomain $subdomain"
-    dig "$subdomain.$domain" | grep -A1 'ANSWER SECTION:' | tail -n -1 | awk '{ print " is a " $4 " record and points to " $5}'
-done
+
+check_subdomain() {
+    local sub=$1
+    echo -n "The subdomain $sub"
+    dig "$sub.$domain" | grep -A1 'ANSWER SECTION:' | tail -n 1 | awk '{print " is a " $4 " record and points to " $5}'
+}
+
+if [ $# -eq 2 ]; then
+    check_subdomain "$2"
+else
+    for sub in "${subdomains[@]}"; do
+        check_subdomain "$sub"
+    done
+fi
+
